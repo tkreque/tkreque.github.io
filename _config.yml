@@ -1,0 +1,40 @@
+# visit https://github.com/mojombo/jekyll/wiki/Configuration for more settings
+
+paginate: 10 # pagination based on number of posts
+paginate_path: "page:num"
+exclude: ["README.md"] # files to exclude
+highlighter: rouge
+markdown: kramdown
+# disqus: dbyll
+# google_analytics: dbyll
+title: RequeTech
+
+defaults:
+  -
+    scope:
+      path: "" # empty string for all files
+    values:
+      title: Reque's Blog
+
+description: Stylish Jekyll Theme
+author:
+  name: Thiago Reque
+  email: thiago.reque@gmail.com
+  github: tkreque
+  twitter: tkreque
+  # pinterest: asd123
+  linkedin: thiago.reque
+  bio: About some tech stuff ;)
+  email_md5: 1104bb84ddd9caf6284a4bda45e48d94
+
+rss_path: feed.xml
+categories_path: categories.html
+tags_path: tags.html
+
+# set it as url of an image
+# sidebar_background_image: https://www.dropbox.com/s/g9h23zrycedxtk5/sky.png?raw=1
+
+BASE_PATH:
+
+plugins:
+  - jekyll-paginate
