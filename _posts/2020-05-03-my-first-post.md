@@ -59,6 +59,10 @@ About the blog, I'll try to post weekly something about RDBMS, AWS, or some prob
 The content will be mostly about technology and experiences but I can post something non-related to tech that I found interesting to share ;)
 
 {% highlight yaml %}
-    $ listening
-    https://open.spotify.com/track/4rzQ5XwJjRJB7vuigG5dfu?si=IM5eDXdMQ12gv1PbLa0exA
+    $ sp current                                                     [2:37:26]
+    Album        Tim Minchin and the Heritage Orchestra
+    AlbumArtist  Tim Minchin
+    Artist       Tim Minchin
+    Title        Dark Side
+    https://open.spotify.com/track/0ucXALGFN7ZgBXYr20ItRk?si=TBve23KqQwyZuAbk9zP5AQ
 {% endhighlight %}

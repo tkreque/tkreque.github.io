@@ -64,8 +64,12 @@ One of the thing I like to do in my spare time, besides gaming and develop is to
 About the blog, I’ll try to post weekly something about RDBMS, AWS, or some problem that I cross at work.
 The content will be mostly about technology and experiences but I can post something non-related to tech that I found interesting to share ;)&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;    &lt;span class=&quot;s&quot;&gt;$ listening&lt;/span&gt;
-    &lt;span class=&quot;s&quot;&gt;https://open.spotify.com/track/4rzQ5XwJjRJB7vuigG5dfu?si=IM5eDXdMQ12gv1PbLa0exA&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;    &lt;span class=&quot;s&quot;&gt;$ sp current                                                     [2:37:26]&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Album        Tim Minchin and the Heritage Orchestra&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;AlbumArtist  Tim Minchin&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Artist       Tim Minchin&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Title        Dark Side&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;https://open.spotify.com/track/0ucXALGFN7ZgBXYr20ItRk?si=TBve23KqQwyZuAbk9zP5AQ&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 </description>
 				<pubDate>Sun, 03 May 2020 00:00:00 -0300</pubDate>
 				<link>/general/2020/05/03/my-first-post.html</link>
