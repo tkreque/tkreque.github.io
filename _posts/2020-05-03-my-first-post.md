@@ -43,7 +43,7 @@ At the 2015 I started a new college in analysis and systems development, which i
 
 **Personal**
 
-I'm a headbanguer, geek and gamer. I currently live in Porto Alegre - RS - Brazil.
+I'm a headbanguer, geek, gamer and a Minesotta Vikings fan. I currently live in Porto Alegre - RS - Brazil.
 
 I listen to heavy metal since I'm 13 years old and I'm a huge Blind Guardian fan, with Pink Floyd, Iron Maiden, Amon Amarth and Symphony X in my top 5 bands.
 About this age as well I started to play Magic the Gathering and D&D 3.5 with my cousins and friends, I stopped after I left school but started to play tabletop RPGs again when I meet my girlfriend at the time (which is my wife now), she is a headbanguer, geek and gamer as well.
