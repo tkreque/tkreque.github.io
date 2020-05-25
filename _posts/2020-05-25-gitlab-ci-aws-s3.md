@@ -99,7 +99,7 @@ $ aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --path
 Job succeeded
 {% endhighlight %}
 
-It was a easy fix mistake but I took a hour to find and resolve even after searched on google. In the end I informed the developer because the last coworker changed the file to perform some tests and left the code with those two references and also to adjust for the production pipeline.
+It was a easy fix mistake but I took a hour to find and resolve even after searched on google so I informed him and explain the changed made and ask him to pass to his team as well.
 
 <br><br>
 I hope you find this useful to your troubleshootings as well.
