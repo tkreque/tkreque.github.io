@@ -7,6 +7,107 @@
 		<atom:link href="/feed.xml" rel="self" type="application/rss+xml" />
 		
 			<item>
+				<title>Gitlab CI + AWS S3</title>
+				<description>&lt;p&gt;Hello there,&lt;/p&gt;
+
+&lt;p&gt;First of all, great weekly posts (sarcasm).
+Today I was seeked to help with some CI of our homologation environment and the problem was simple but it can pass unoticed thats why I resolved to post to help whom may need.&lt;/p&gt;
+
+&lt;p&gt;Here at my company we use a local Gitlab as repository and the Gitlab runner to build and deply our applications. I’m not very experienced with Gitlab but after a few troubleshootings in the past I understand how it works and where to look which can help a lot under this circunstanses.
+Now the problem, one of my coworkers came to me with the error below on the pipeline and asking to add the permission to the AWS Key used on the pipeline to run our deploy on Homologation.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;s&quot;&gt;$ aws s3 rm $HLG_S3 --recursive&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;fatal error&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;An error occurred (AccessDenied) when calling the ListObjectsV2 operation&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Access Denied&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ERROR&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;Job failed&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;command terminated with exit code 1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Looking at the AWS IAM the user had full permissions on the Bucket in question, so I asked to look at the project in Gitlab because theres two options, or the AWS Key is wrong or something changed in the project which in fact the runner changed, they started to use a runner in docker, prior was an EC2 that we used to have. So in this new context I went to check how are the “.gitlab-ci.yml” was configurated and everything looked Ok, below is the code snippet of the deploy for homologation.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;na&quot;&gt;deploy-homolog&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;stage&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;deploy&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;variables&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;AWS_ACCESS_KEY_ID&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$HLG_KEY_ID&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;AWS_SECRET_ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$HLG_KEY_SECRET&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;script&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;aws s3 rm $HLG_S3 --recursive&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;aws s3 cp ./release/ $HLG_S3 --recursive&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;environment&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Homolog&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;when&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;on_success&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;variables&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;GIT_STRATEGY&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;none&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;only&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;pi&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;homolog&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Going to ‘Settings -&amp;gt; CI / CD -&amp;gt; Variables’ the homolog key was indeed correct, so what was wrong? Maybe the Variable wasn’t been correct exported to the new Runner, so I went to check.
+I first added the line &lt;code class=&quot;highlighter-rouge&quot;&gt;- echo $AWS_ACCESS_KEY_ID&lt;/code&gt; on the file “.gitlab-ci.yml” after the &lt;code class=&quot;highlighter-rouge&quot;&gt;script:&lt;/code&gt; section to be the first line executed, and as I thought the variable was empty.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;s&quot;&gt;$ echo $AWS_ACCESS_KEY_ID&lt;/span&gt;
+
+&lt;span class=&quot;s&quot;&gt;$ aws s3 rm $HLG_S3 --recursive&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;fatal error&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;An error occurred (AccessDenied) when calling the ListObjectsV2 operation&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Access Denied&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ERROR&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;Job failed&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;command terminated with exit code 1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Well, now I need to check if the variable from the Gitlab is being loaded in the runner, so I change the &lt;code class=&quot;highlighter-rouge&quot;&gt;- echo $AWS_ACCESS_KEY_ID&lt;/code&gt; to &lt;code class=&quot;highlighter-rouge&quot;&gt;- export&lt;/code&gt; to list all variables and everything seems ok.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;s&quot;&gt;$ export&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x AWS_DEFAULT_REGION=&quot;[my region]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x HLG_KEY_ID=&quot;[my key]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x HLG_KEY_SECRET=&quot;[my secret]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x PRD_KEY_ID=&quot;[my key]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x PRD_KEY_SECRET=&quot;[my secret]&quot;&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x HLG_CLOUDFRONT_ID=&quot;[my cdn id]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x PRD_CLOUDFRONT_ID=&quot;[my cdn id]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x HLG_S3=&quot;s3://[my s3 endpoint]&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;declare -x PRD_S3=&quot;s3://[my s3 endpoint]&quot;&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;$ aws s3 rm $HLG_S3 --recursive&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;fatal error&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;An error occurred (AccessDenied) when calling the ListObjectsV2 operation&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;Access Denied&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ERROR&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;Job failed&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;command terminated with exit code 1&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;em&gt;Ps. I added within the brackets the reference of what it is so I won’t expose any sensitive information.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;So the Gitlab indeed was fowarding the information but the runner wasn’t able to export to the variables.
+Looking at the history of the “.gitlab-ci.yml” file I noticed something that my eyes didn’t notice, there was two &lt;code class=&quot;highlighter-rouge&quot;&gt;variables:&lt;/code&gt; in the file, one in the beggining and other in the end.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;variables&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;AWS_ACCESS_KEY_ID&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$HLG_KEY_ID&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;AWS_SECRET_ACCESS_KEY&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;$HLG_KEY_SECRET&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;variables&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;na&quot;&gt;GIT_STRATEGY&lt;/span&gt;&lt;span class=&quot;pi&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;none&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I removed the second reference and start the pipeline once more, and jackpot! The job finished successfully.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;&lt;span class=&quot;s&quot;&gt;$ aws s3 rm $HLG_S3 --recursive&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;$ aws s3 cp ./release/ $HLG_S3 --recursive&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;$ aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'&lt;/span&gt;
+&lt;span class=&quot;nn&quot;&gt;...&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;Job succeeded&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It was a easy fix mistake but I took a hour to find and resolve even after searched on google. In the end I informed the developer because the last coworker changed the file to some tests and left the code with those two references and also to adjust for the production pipeline.&lt;/p&gt;
+
+&lt;p&gt;&lt;br /&gt;&lt;br /&gt;
+I hope you find this useful to your troubleshootings as well.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;    &lt;span class=&quot;s&quot;&gt;$ sp current                                                     [17:21:51]&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Album        Piece of Mind (2015 Remaster)&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;AlbumArtist  Iron Maiden&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Artist       Iron Maiden&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;Title        Where Eagles Dare - 2015 Remaster&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;https://open.spotify.com/track/5QtlbCKhAL70eQM9dbzoR8?si=Pu8vJzTGRd6OfDpF3XqjmQ&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+</description>
+				<pubDate>Mon, 25 May 2020 00:00:00 -0300</pubDate>
+				<link>/troubleshooting/2020/05/25/gitlab-ci-aws-s3.html</link>
+				<guid isPermaLink="true">/troubleshooting/2020/05/25/gitlab-ci-aws-s3.html</guid>
+			</item>
+		
+			<item>
 				<title>Who am I?</title>
 				<description>
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;    &lt;span class=&quot;s&quot;&gt;$ whoami&lt;/span&gt;
@@ -49,7 +150,7 @@ At the 2015 I started a new college in analysis and systems development, which i
 
 &lt;p&gt;&lt;strong&gt;Personal&lt;/strong&gt;&lt;/p&gt;
 
-&lt;p&gt;I’m a headbanguer, geek and gamer. I currently live in Porto Alegre - RS - Brazil.&lt;/p&gt;
+&lt;p&gt;I’m a headbanguer, geek, gamer and a Minesotta Vikings fan. I currently live in Porto Alegre - RS - Brazil.&lt;/p&gt;
 
 &lt;p&gt;I listen to heavy metal since I’m 13 years old and I’m a huge Blind Guardian fan, with Pink Floyd, Iron Maiden, Amon Amarth and Symphony X in my top 5 bands.
 About this age as well I started to play Magic the Gathering and D&amp;amp;D 3.5 with my cousins and friends, I stopped after I left school but started to play tabletop RPGs again when I meet my girlfriend at the time (which is my wife now), she is a headbanguer, geek and gamer as well.

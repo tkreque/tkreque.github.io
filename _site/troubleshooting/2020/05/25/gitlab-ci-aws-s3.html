@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Gitlab CI + AWS S3</title>
+	
+	<meta name="description" content="Troubleshooting CI problems">
+	
+	<meta name="author" content="Thiago Reque">
+
+	<!-- Enable responsive viewport -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+	<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+
+	<!-- Le styles -->
+	<link href="/assets/resources/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/assets/resources/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+	<link href="/assets/resources/syntax/syntax.css" rel="stylesheet">
+	<link href="/assets/css/style.css" rel="stylesheet">
+
+	<!-- Le fav and touch icons -->
+	<!-- Update these with your own images
+	<link rel="shortcut icon" href="images/favicon.ico">
+	<link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+	<link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+	<link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+	-->
+
+	<link rel="alternate" type="application/rss+xml" title="" href="/feed.xml">
+</head>
+
+<body>
+	<nav class="navbar navbar-default visible-xs" role="navigation">
+		<!-- Brand and toggle get grouped for better mobile display -->
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			
+			<a type="button" class="navbar-toggle nav-link" href="http://github.com/tkreque">
+				<i class="fa fa-github"></i>
+			</a>
+			
+			
+			<a type="button" class="navbar-toggle nav-link" href="http://twitter.com/tkreque">
+				<i class="fa fa-twitter"></i>
+			</a>
+			
+			
+			<a type="button" class="navbar-toggle nav-link" href="mailto:thiago.reque@gmail.com">
+				<i class="fa fa-envelope"></i>
+			</a>
+			
+			<a class="navbar-brand" href="/">
+				<img src="//www.gravatar.com/avatar/1104bb84ddd9caf6284a4bda45e48d94?s=35" class="img-circle" />
+				RequeTech
+			</a>
+		</div>
+
+		<!-- Collect the nav links, forms, and other content for toggling -->
+		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+			<ul class="nav navbar-nav">
+				<li class="active"><a href="/">Home</a></li>
+				<li><a href="/categories.html">Categories</a></li>
+				<li><a href="/tags.html">Tags</a></li>
+			</ul>
+		</div><!-- /.navbar-collapse -->
+	</nav>
+
+	<!-- nav-menu-dropdown -->
+	<div class="btn-group hidden-xs" id="nav-menu">
+		<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+			<i class="fa fa-bars"></i>
+		</button>
+		<ul class="dropdown-menu" role="menu">
+			<li><a href="/"><i class="fa fa-home"></i>Home</a></li>
+			<li><a href="/categories.html"><i class="fa fa-folder"></i>Categories</a></li>
+			<li><a href="/tags.html"><i class="fa fa-tags"></i>Tags</a></li>
+			<li class="divider"></li>
+			<li><a href="#"><i class="fa fa-arrow-up"></i>Top of Page</a></li>
+		</ul>
+	</div>
+
+	<div class="col-sm-3 sidebar hidden-xs" style="">
+		<!-- sidebar.html -->
+<header class="sidebar-header" role="banner">
+	<a href="/">
+		<img src="//www.gravatar.com/avatar/1104bb84ddd9caf6284a4bda45e48d94?s=150" class="img-circle" />
+	</a>
+	<h3 class="title">
+        <a href="/">RequeTech</a>
+    </h3>
+</header>
+
+
+<div id="bio" class="text-center">
+	About some tech stuff ;)
+</div>
+
+
+<div id="contact-list" class="text-center">
+	<ul class="list-unstyled list-inline">
+		
+		<li>
+			<a class="btn btn-default btn-sm" href="https://github.com/tkreque">
+				<i class="fa fa-github-alt fa-lg"></i>
+			</a>
+		</li>
+		
+		
+		<li>
+			<a class="btn btn-default btn-sm" href="https://twitter.com/tkreque">
+				<i class="fa fa-twitter fa-lg"></i>
+			</a>
+		</li>
+		
+		
+		<li>
+			<a class="btn btn-default btn-sm" href="mailto:thiago.reque@gmail.com">
+				<i class="fa fa-envelope fa-lg"></i>
+			</a>
+		</li>
+		
+	</ul>
+	<ul id="contact-list-secondary" class="list-unstyled list-inline">
+		
+		
+		<li>
+			<a class="btn btn-default btn-sm" href="https://linkedin.com/in/thiago.reque">
+				<i class="fa fa-linkedin fa-lg"></i>
+			</a>
+		</li>
+		
+		<li>
+			<a class="btn btn-default btn-sm" href="/feed.xml">
+				<i class="fa fa-rss fa-lg"></i>
+			</a>
+		</li>
+	</ul>
+</div>
+<!-- sidebar.html end -->
+
+	</div>
+
+	<div class="col-sm-9 col-sm-offset-3">
+		<div class="page-header">
+  <h1>Gitlab CI + AWS S3 </h1>
+</div>
+	
+<article>
+
+	<div class="col-sm-10">
+	 <span class="post-date">
+	   
+	   May 
+	   25th,
+	   
+	   2020
+	 </span>
+	  <div class="article_body">
+	  <p>Hello there,</p>
+
+<p>First of all, great weekly posts (sarcasm).
+Today I was seeked to help with some CI of our homologation environment and the problem was simple but it can pass unoticed thats why I resolved to post to help whom may need.</p>
+
+<p>Here at my company we use a local Gitlab as repository and the Gitlab runner to build and deply our applications. I’m not very experienced with Gitlab but after a few troubleshootings in the past I understand how it works and where to look which can help a lot under this circunstanses.
+Now the problem, one of my coworkers came to me with the error below on the pipeline and asking to add the permission to the AWS Key used on the pipeline to run our deploy on Homologation.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p>Looking at the AWS IAM the user had full permissions on the Bucket in question, so I asked to look at the project in Gitlab because theres two options, or the AWS Key is wrong or something changed in the project which in fact the runner changed, they started to use a runner in docker, prior was an EC2 that we used to have. So in this new context I went to check how are the “.gitlab-ci.yml” was configurated and everything looked Ok, below is the code snippet of the deploy for homologation.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="na">deploy-homolog</span><span class="pi">:</span>
+<span class="na">stage</span><span class="pi">:</span> <span class="s">deploy</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">AWS_ACCESS_KEY_ID</span><span class="pi">:</span> <span class="s">$HLG_KEY_ID</span>
+    <span class="na">AWS_SECRET_ACCESS_KEY</span><span class="pi">:</span> <span class="s">$HLG_KEY_SECRET</span>
+<span class="na">script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">aws s3 rm $HLG_S3 --recursive</span>
+    <span class="pi">-</span> <span class="s">aws s3 cp ./release/ $HLG_S3 --recursive</span>
+    <span class="pi">-</span> <span class="s">aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'</span>
+<span class="na">environment</span><span class="pi">:</span> <span class="s">Homolog</span>
+<span class="na">when</span><span class="pi">:</span> <span class="s">on_success</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">GIT_STRATEGY</span><span class="pi">:</span> <span class="s">none</span>
+<span class="na">only</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">homolog</span></code></pre></figure>
+
+<p>Going to ‘Settings -&gt; CI / CD -&gt; Variables’ the homolog key was indeed correct, so what was wrong? Maybe the Variable wasn’t been correct exported to the new Runner, so I went to check.
+I first added the line <code class="highlighter-rouge">- echo $AWS_ACCESS_KEY_ID</code> on the file “.gitlab-ci.yml” after the <code class="highlighter-rouge">script:</code> section to be the first line executed, and as I thought the variable was empty.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ echo $AWS_ACCESS_KEY_ID</span>
+
+<span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p>Well, now I need to check if the variable from the Gitlab is being loaded in the runner, so I change the <code class="highlighter-rouge">- echo $AWS_ACCESS_KEY_ID</code> to <code class="highlighter-rouge">- export</code> to list all variables and everything seems ok.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ export</span>
+<span class="s">declare -x AWS_DEFAULT_REGION="[my region]"</span>
+<span class="s">declare -x HLG_KEY_ID="[my key]"</span>
+<span class="s">declare -x HLG_KEY_SECRET="[my secret]"</span>
+<span class="s">declare -x PRD_KEY_ID="[my key]"</span>
+<span class="s">declare -x PRD_KEY_SECRET="[my secret]"</span>
+<span class="nn">...</span>
+<span class="s">declare -x HLG_CLOUDFRONT_ID="[my cdn id]"</span>
+<span class="s">declare -x PRD_CLOUDFRONT_ID="[my cdn id]"</span>
+<span class="s">declare -x HLG_S3="s3://[my s3 endpoint]"</span>
+<span class="s">declare -x PRD_S3="s3://[my s3 endpoint]"</span>
+<span class="nn">...</span>
+<span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p><em>Ps. I added within the brackets the reference of what it is so I won’t expose any sensitive information.</em></p>
+
+<p>So the Gitlab indeed was fowarding the information but the runner wasn’t able to export to the variables.
+Looking at the history of the “.gitlab-ci.yml” file I noticed something that my eyes didn’t notice, there was two <code class="highlighter-rouge">variables:</code> in the file, one in the beggining and other in the end.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="nn">...</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">AWS_ACCESS_KEY_ID</span><span class="pi">:</span> <span class="s">$HLG_KEY_ID</span>
+    <span class="na">AWS_SECRET_ACCESS_KEY</span><span class="pi">:</span> <span class="s">$HLG_KEY_SECRET</span>
+<span class="nn">...</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">GIT_STRATEGY</span><span class="pi">:</span> <span class="s">none</span>
+<span class="nn">...</span></code></pre></figure>
+
+<p>I removed the second reference and start the pipeline once more, and jackpot! The job finished successfully.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="nn">...</span>
+<span class="s">$ aws s3 cp ./release/ $HLG_S3 --recursive</span>
+<span class="nn">...</span>
+<span class="s">$ aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'</span>
+<span class="nn">...</span>
+<span class="s">Job succeeded</span></code></pre></figure>
+
+<p>It was a easy fix mistake but I took a hour to find and resolve even after searched on google. In the end I informed the developer because the last coworker changed the file to some tests and left the code with those two references and also to adjust for the production pipeline.</p>
+
+<p><br /><br />
+I hope you find this useful to your troubleshootings as well.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml">    <span class="s">$ sp current                                                     [17:21:51]</span>
+    <span class="s">Album        Piece of Mind (2015 Remaster)</span>
+    <span class="s">AlbumArtist  Iron Maiden</span>
+    <span class="s">Artist       Iron Maiden</span>
+    <span class="s">Title        Where Eagles Dare - 2015 Remaster</span>
+    <span class="s">https://open.spotify.com/track/5QtlbCKhAL70eQM9dbzoR8?si=Pu8vJzTGRd6OfDpF3XqjmQ</span></code></pre></figure>
+
+
+	  </div>
+
+		
+		<ul class="tag_box list-unstyled list-inline">
+		  <li><i class="fa fa-folder-open"></i></li>
+		  
+		  
+			 
+				<li><a href="/categories.html#troubleshooting-ref">
+					troubleshooting <span>(1)</span>
+					
+				</a></li>
+			
+		  
+		</ul>
+		  
+
+		
+		<ul class="list-inline">
+		  <li><i class="fa fa-tags"></i></li>
+		  
+		  
+			 
+				<li>
+					<a href="/tags.html#gitlab-ref">
+					gitlab <span>(1)</span>
+					,
+					</a>
+				</li>
+			 
+				<li>
+					<a href="/tags.html#ci-ref">
+					ci <span>(1)</span>
+					,
+					</a>
+				</li>
+			 
+				<li>
+					<a href="/tags.html#aws-ref">
+					aws <span>(1)</span>
+					,
+					</a>
+				</li>
+			 
+				<li>
+					<a href="/tags.html#s3-ref">
+					s3 <span>(1)</span>
+					
+					</a>
+				</li>
+			
+		  
+		  
+		</ul>
+		  
+
+		<hr>
+
+		<div>
+      <section class="share col-sm-6">
+        <h4 class="section-title">Share Post</h4>
+        <a class="btn btn-default btn-sm twitter" href="http://twitter.com/share?text=Gitlab CI + AWS S3&via=tkreque"
+           onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;">
+          <i class="fa fa-twitter fa-lg"></i>
+          Twitter
+        </a>
+        <a class="btn btn-default btn-sm facebook" href="https://www.facebook.com/sharer/sharer.php"
+           onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;">
+          <i class="fa fa-facebook fa-lg"></i>
+          Facebook
+        </a>
+        <a class="btn btn-default btn-sm gplus"
+           onclick="window.open('https://plus.google.com/share?url='+window.location.href, 'google-plus-share', 'width=490,height=530');return false;">
+          <i class="fa fa-google-plus fa-lg"></i>
+          Google+
+        </a>
+      </section>
+
+      <section class="col-sm-6 author">
+        <img src="//www.gravatar.com/avatar/1104bb84ddd9caf6284a4bda45e48d94" class="img-rounded author-image" />
+        <h4 class="section-title author-name">Thiago Reque</h4>
+        <p class="author-bio">About some tech stuff ;)</p>
+      </section>
+    </div>
+
+    <div class="clearfix"></div>
+
+		<ul class="pager">
+		  
+		  <li class="previous"><a href="/general/2020/05/03/my-first-post.html" title="Who am I?">&larr; Previous</a></li>
+		  
+		  
+			<li class="next disabled"><a>Next &rarr;</a>
+		  
+		</ul>
+
+		<hr>
+	</div>
+	
+	<div class="col-sm-2 sidebar-2">
+	
+	</div>
+</article>
+<div class="clearfix"></div>
+
+
+
+
+
+		<footer>
+			<hr/>
+			<p>
+				&copy; 2020 Thiago Reque with <a href="http://jekyllrb.com/">Jekyll</a>. Theme: <a href="https://github.com/dbtek/dbyll">dbyll</a> by dbtek.
+			</p>
+		</footer>
+	</div>
+
+	<script type="text/javascript" src="/assets/resources/jquery/jquery.min.js"></script>
+	<script type="text/javascript" src="/assets/resources/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="/assets/js/app.js"></script>
+</body>
+</html>
+
+
+

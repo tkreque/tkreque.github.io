@@ -1,0 +1,95 @@
+I"E <p>Hello there,</p>
+
+<p>First of all, great weekly posts (sarcasm).
+Today I was seeked to help with some CI of our homologation environment and the problem was simple but it can pass unoticed thats why I resolved to post to help whom may need.</p>
+
+<p>Here at my company we use a local Gitlab as repository and the Gitlab runner to build and deply our applications. I’m not very experienced with Gitlab but after a few troubleshootings in the past I understand how it works and where to look which can help a lot under this circunstanses.</p>
+
+<p>Now the problem, one of my coworkers came to me with the error below on the pipeline and asking to add the permission to the AWS Key used on the pipeline to run our deploy on Homologation.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p>Looking at the AWS IAM the user had full permissions on the Bucket in question, so I asked to look at the project in Gitlab because theres two options, or the AWS Key is wrong or something changed in the project which in fact the runner changed, they started to use a runner in docker, prior was an EC2 that we used to have. So in this new context I went to check how are the “.gitlab-ci.yml” was configurated and everything looked Ok, below is the code snippet of the deploy for homologation.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="na">deploy-homolog</span><span class="pi">:</span>
+<span class="na">stage</span><span class="pi">:</span> <span class="s">deploy</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">AWS_ACCESS_KEY_ID</span><span class="pi">:</span> <span class="s">$HLG_KEY_ID</span>
+    <span class="na">AWS_SECRET_ACCESS_KEY</span><span class="pi">:</span> <span class="s">$HLG_KEY_SECRET</span>
+<span class="na">script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">aws s3 rm $HLG_S3 --recursive</span>
+    <span class="pi">-</span> <span class="s">aws s3 cp ./release/ $HLG_S3 --recursive</span>
+    <span class="pi">-</span> <span class="s">aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'</span>
+<span class="na">environment</span><span class="pi">:</span> <span class="s">Homolog</span>
+<span class="na">when</span><span class="pi">:</span> <span class="s">on_success</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">GIT_STRATEGY</span><span class="pi">:</span> <span class="s">none</span>
+<span class="na">only</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">homolog</span></code></pre></figure>
+
+<p>Going to ‘Settings -&gt; CI / CD -&gt; Variables’ the homolog key was indeed correct, so what was wrong? Maybe the Variable wasn’t been correct exported to the new Runner, so I went to check.
+I first added the line <code class="highlighter-rouge">- echo $AWS_ACCESS_KEY_ID</code> on the file “.gitlab-ci.yml” after the <code class="highlighter-rouge">script:</code> section to be the first line executed, and as I thought the variable was empty.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ echo $AWS_ACCESS_KEY_ID</span>
+
+<span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p>Well, now I need to check if the variable from the Gitlab is being loaded in the runner, so I change the <code class="highlighter-rouge">- echo $AWS_ACCESS_KEY_ID</code> to <code class="highlighter-rouge">- export</code> to list all variables and everything seems ok.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ export</span>
+<span class="s">declare -x AWS_DEFAULT_REGION="[my region]"</span>
+<span class="s">declare -x HLG_KEY_ID="[my key]"</span>
+<span class="s">declare -x HLG_KEY_SECRET="[my secret]"</span>
+<span class="s">declare -x PRD_KEY_ID="[my key]"</span>
+<span class="s">declare -x PRD_KEY_SECRET="[my secret]"</span>
+<span class="nn">...</span>
+<span class="s">declare -x HLG_CLOUDFRONT_ID="[my cdn id]"</span>
+<span class="s">declare -x PRD_CLOUDFRONT_ID="[my cdn id]"</span>
+<span class="s">declare -x HLG_S3="s3://[my s3 endpoint]"</span>
+<span class="s">declare -x PRD_S3="s3://[my s3 endpoint]"</span>
+<span class="nn">...</span>
+<span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="na">fatal error</span><span class="pi">:</span> <span class="s">An error occurred (AccessDenied) when calling the ListObjectsV2 operation</span><span class="pi">:</span> <span class="s">Access Denied</span>
+<span class="na">ERROR</span><span class="pi">:</span> <span class="na">Job failed</span><span class="pi">:</span> <span class="s">command terminated with exit code 1</span></code></pre></figure>
+
+<p><em>Ps. I added within the brackets the reference of what it is so I won’t expose any sensitive information.</em></p>
+
+<p>So the Gitlab indeed was fowarding the information but the runner wasn’t able to export to the variables.
+Looking at the history of the “.gitlab-ci.yml” file I noticed something that my eyes didn’t notice, there was two <code class="highlighter-rouge">variables:</code> in the file, one in the beggining and other in the end.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="nn">...</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">AWS_ACCESS_KEY_ID</span><span class="pi">:</span> <span class="s">$HLG_KEY_ID</span>
+    <span class="na">AWS_SECRET_ACCESS_KEY</span><span class="pi">:</span> <span class="s">$HLG_KEY_SECRET</span>
+<span class="nn">...</span>
+<span class="na">variables</span><span class="pi">:</span>
+    <span class="na">GIT_STRATEGY</span><span class="pi">:</span> <span class="s">none</span>
+<span class="nn">...</span></code></pre></figure>
+
+<p>I removed the second reference and start the pipeline once more, and jackpot! The job finished successfully.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="s">$ aws s3 rm $HLG_S3 --recursive</span>
+<span class="nn">...</span>
+<span class="s">$ aws s3 cp ./release/ $HLG_S3 --recursive</span>
+<span class="nn">...</span>
+<span class="s">$ aws cloudfront create-invalidation --distribution-id $HLG_CLOUDFRONT_ID --paths '/*'</span>
+<span class="nn">...</span>
+<span class="s">Job succeeded</span></code></pre></figure>
+
+<p>It was a easy fix mistake but I took a hour to find and resolve even after searched on google. In the end I informed the developer because the last coworker changed the file to some tests and left the code with those two references and also to adjust for the production pipeline.</p>
+
+<p><br /><br />
+I hope you find this useful to your troubleshootings as well.</p>
+
+<figure class="highlight"><pre><code class="language-yaml" data-lang="yaml">    <span class="s">$ sp current                                                     [17:21:51]</span>
+    <span class="s">Album        Piece of Mind (2015 Remaster)</span>
+    <span class="s">AlbumArtist  Iron Maiden</span>
+    <span class="s">Artist       Iron Maiden</span>
+    <span class="s">Title        Where Eagles Dare - 2015 Remaster</span>
+    <span class="s">https://open.spotify.com/track/5QtlbCKhAL70eQM9dbzoR8?si=Pu8vJzTGRd6OfDpF3XqjmQ</span></code></pre></figure>
+
+:ET
