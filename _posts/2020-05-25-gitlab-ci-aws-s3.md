@@ -9,7 +9,7 @@ description: Troubleshooting CI problems
 Hello there,
 
 First of all, great weekly posts (sarcasm).
-Today I was seeked to help with some CI of our homologation environment and the problem was simple but it can pass unoticed thats why I resolved to post to help whom may need.
+Today a coworker was needing help with problems on CI/CD in our homologation environment, the problem was simple but it can pass unnoticed and that is why I resolved to post it so it can help whom may need.
 
 Here at my company we use a local Gitlab as repository and the Gitlab runner to build and deply our applications. I'm not very experienced with Gitlab but after a few troubleshootings in the past I understand how it works and where to look which can help a lot under this circunstanses.
 Now the problem, one of my coworkers came to me with the error below on the pipeline and asking to add the permission to the AWS Key used on the pipeline to run our deploy on Homologation.
