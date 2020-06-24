@@ -12,6 +12,7 @@ First of all, great weekly posts (sarcasm).
 Today a coworker was needing help with problems on CI/CD in our homologation environment, the problem was simple but it can pass unnoticed and that is why I resolved to post it so it can help whom may need.
 
 Here at my company we use a local Gitlab as repository and the Gitlab runner to build and deply our applications. I'm not very experienced with Gitlab but after a few troubleshootings in the past I understand how it works and where to look which can help a lot under this circunstanses.
+
 Now the problem, one of my coworkers came to me with the error below on the pipeline and asking to add the permission to the AWS Key used on the pipeline to run our deploy on Homologation.
 
 {% highlight yaml %}
@@ -20,7 +21,7 @@ fatal error: An error occurred (AccessDenied) when calling the ListObjectsV2 ope
 ERROR: Job failed: command terminated with exit code 1
 {% endhighlight %}
 
-Looking at the AWS IAM the user had full permissions on the Bucket in question, so I asked to look at the project in Gitlab because theres two options, or the AWS Key is wrong or something changed in the project which in fact the runner changed, they started to use a runner in docker, prior was an EC2 that we used to have. So in this new context I went to check how are the ".gitlab-ci.yml" was configurated and everything looked Ok, below is the code snippet of the deploy for homologation.
+Looking at the AWS IAM the user had full permissions on the Bucket in question, so I asked my coworker to look at the project in Gitlab because theres two options, or the AWS Key is wrong or something changed in the project which in fact the runner changed, they started to use a runner in docker, prior was an EC2 that we used to have. So in this new context I went to check how the ".gitlab-ci.yml" was configurated and everything looked Ok, below is the code snippet of the deploy for homologation.
 
 {% highlight yaml %}
 deploy-homolog:
